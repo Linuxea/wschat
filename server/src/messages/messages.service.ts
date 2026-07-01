@@ -33,7 +33,7 @@ export interface MessageView {
 
 /** Insert a space between every CJK char so that Postgres 'simple' tsvector
  *  can index individual characters — enables keyword search for Chinese text. */
-function tokenizeForSearch(text: string): string {
+export function tokenizeForSearch(text: string): string {
   return text
     .replace(/([\u4e00-\u9fff])/g, ' $1 ')
     .replace(/\s+/g, ' ')
