@@ -62,11 +62,11 @@ export function MomentsView() {
 
   return (
     <div className="flex h-full w-full flex-col bg-white">
-      <header className="flex h-14 items-center justify-between border-b border-wechat-border px-5">
+      <header className="flex h-14 items-center justify-between border-b border-border px-5">
         <h1 className="text-lg font-semibold">朋友圈</h1>
         <button
           onClick={() => setComposing(true)}
-          className="rounded p-2 text-wechat-subtext hover:bg-black/5 hover:text-wechat-green"
+          className="rounded p-2 text-subtext hover:bg-black/5 hover:text-primary"
           title="发表"
         >
           <Camera size={20} />
@@ -76,7 +76,7 @@ export function MomentsView() {
       <div className="scrollbar-thin flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex justify-center py-10">
-            <Spinner className="text-wechat-green" />
+            <Spinner className="text-primary" />
           </div>
         ) : !feed || feed.length === 0 ? (
           <EmptyState title="朋友圈空空如也" hint="点右上角相机发表第一条" />
@@ -112,7 +112,7 @@ export function MomentsView() {
                 </div>
               ))}
               {media.length < 9 && (
-                <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded border border-dashed border-wechat-border text-wechat-subtext hover:bg-wechat-panel">
+                <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded border border-dashed border-border text-subtext hover:bg-panel">
                   <ImagePlus size={20} />
                   <input type="file" accept="image/*,video/*" multiple hidden onChange={onPickImage} />
                 </label>
@@ -128,7 +128,7 @@ export function MomentsView() {
                       key={v.value}
                       onClick={() => setVisibility(v.value)}
                       className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs ${
-                        visibility === v.value ? 'border-wechat-green bg-wechat-green/10 text-wechat-green' : 'border-wechat-border text-wechat-subtext'
+                        visibility === v.value ? 'border-primary bg-primary/10 text-primary' : 'border-border text-subtext'
                       }`}
                     >
                       <Icon size={12} /> {v.label}

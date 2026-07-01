@@ -92,7 +92,7 @@ export function MessageInput({ conversationId, onSent }: Props) {
   }
 
   return (
-    <div className="relative border-t border-wechat-border bg-wechat-panel">
+    <div className="relative border-t border-border bg-panel backdrop-blur-xl">
       {showEmoji && (
         <div className="absolute bottom-full left-2 z-20">
           <Picker
@@ -110,15 +110,15 @@ export function MessageInput({ conversationId, onSent }: Props) {
       <div className="flex items-end gap-2 px-3 py-2">
         <button
           onClick={() => setShowEmoji((v) => !v)}
-          className={cn('rounded p-1.5 text-wechat-subtext hover:bg-black/5', showEmoji && 'text-wechat-green')}
+          className={cn('rounded p-1.5 text-subtext hover:bg-black/5', showEmoji && 'text-primary')}
           title="表情"
         >
           <Smile size={20} />
         </button>
-        <button onClick={() => fileImg.current?.click()} className="rounded p-1.5 text-wechat-subtext hover:bg-black/5" title="图片">
+        <button onClick={() => fileImg.current?.click()} className="rounded p-1.5 text-subtext hover:bg-black/5" title="图片">
           <ImageIcon size={20} />
         </button>
-        <button onClick={() => fileDoc.current?.click()} className="rounded p-1.5 text-wechat-subtext hover:bg-black/5" title="文件/视频">
+        <button onClick={() => fileDoc.current?.click()} className="rounded p-1.5 text-subtext hover:bg-black/5" title="文件/视频">
           <FileText size={20} />
         </button>
         <input ref={fileImg} type="file" accept="image/*" hidden onChange={onImage} />
@@ -134,12 +134,12 @@ export function MessageInput({ conversationId, onSent }: Props) {
             }
           }}
           placeholder="输入消息，Enter 发送，Shift+Enter 换行"
-          className="scrollbar-thin max-h-32 min-h-[40px] flex-1 resize-none rounded-md border border-wechat-border bg-white px-3 py-2 text-sm outline-none focus:border-wechat-green"
+          className="scrollbar-thin max-h-32 min-h-[40px] flex-1 resize-none rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
         />
         <button
           onClick={sendText}
           disabled={!text.trim() || sending}
-          className="rounded-md bg-wechat-green px-4 py-2 text-sm text-white transition hover:bg-wechat-greenDark disabled:opacity-40"
+          className="rounded-md bg-primary px-4 py-2 text-sm text-white transition hover:bg-primary-hover disabled:opacity-40"
         >
           <Send size={16} />
         </button>

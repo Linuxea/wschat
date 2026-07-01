@@ -80,7 +80,7 @@ function IncomingCard({
           }}
           className="flex flex-col items-center gap-2 text-white"
         >
-          <span className="flex h-14 w-14 animate-pulse items-center justify-center rounded-full bg-wechat-green hover:bg-wechat-greenDark">
+          <span className="flex h-14 w-14 animate-pulse items-center justify-center rounded-full bg-primary hover:bg-primary-hover">
             <Phone size={24} />
           </span>
           <span className="text-xs">接听</span>

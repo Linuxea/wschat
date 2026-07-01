@@ -53,13 +53,13 @@ export default function ForgotPasswordPage() {
   if (step === 'username') {
     return (
       <form onSubmit={fetchQuestion} className="space-y-4">
-        <h1 className="text-xl font-semibold text-wechat-text">找回密码</h1>
+        <h1 className="text-xl font-semibold text-text">找回密码</h1>
         <Input placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
         <Button type="submit" className="w-full" disabled={loading || !username}>
           {loading ? '查询中…' : '下一步'}
         </Button>
-        <div className="text-center text-sm text-wechat-subtext">
-          <Link href="/login" className="text-wechat-green hover:underline">返回登录</Link>
+        <div className="text-center text-sm text-subtext">
+          <Link href="/login" className="text-primary hover:underline">返回登录</Link>
         </div>
       </form>
     );
@@ -67,9 +67,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <form onSubmit={reset} className="space-y-4">
-      <h1 className="text-xl font-semibold text-wechat-text">重置密码</h1>
-      <div className="rounded-md bg-wechat-panel px-3 py-2 text-sm">
-        <span className="text-wechat-subtext">密保问题：</span>
+      <h1 className="text-xl font-semibold text-text">重置密码</h1>
+      <div className="rounded-md bg-panel px-3 py-2 text-sm">
+        <span className="text-subtext">密保问题：</span>
         {question}
       </div>
       <Input placeholder="密保答案" value={answer} onChange={(e) => setAnswer(e.target.value)} autoFocus />

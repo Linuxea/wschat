@@ -9,23 +9,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // WeChat-inspired palette
-        wechat: {
-          green: '#07c160',
-          greenDark: '#06ad56',
-          bg: '#ededed',
-          panel: '#f7f7f7',
-          border: '#e0e0e0',
-          text: '#191919',
-          subtext: '#888888',
-          chatbg: '#f5f5f5',
-          mybubble: '#95ec69',
+        // Semantic tokens — resolved to CSS variables, swapped per theme via [data-theme]
+        primary: {
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
         },
+        background: 'var(--background)',
+        surface: 'var(--surface)',
+        panel: 'var(--panel)',
+        border: 'var(--border)',
+        text: 'var(--text)',
+        subtext: 'var(--subtext)',
+        chatbg: 'var(--chatbg)',
+        'bubble-self': 'var(--bubble-self)',
+        'bubble-other': 'var(--bubble-other)',
+        rail: 'var(--rail)',
+      },
+      borderRadius: {
+        DEFAULT: 'var(--radius)',
+        bubble: 'var(--radius-bubble)',
+      },
+      boxShadow: {
+        soft: 'var(--shadow-soft)',
+        'soft-md': 'var(--shadow-soft-md)',
+        'soft-lg': 'var(--shadow-soft-lg)',
       },
       fontFamily: {
         sans: [
           '-apple-system',
           'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          '"SF Pro Display"',
           '"PingFang SC"',
           '"Microsoft YaHei"',
           'system-ui',

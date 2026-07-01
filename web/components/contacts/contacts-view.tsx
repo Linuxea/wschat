@@ -35,7 +35,7 @@ export function ContactsView() {
   return (
     <>
       <div className="flex h-full w-full flex-col bg-white">
-        <header className="flex h-14 items-center justify-between border-b border-wechat-border px-4">
+        <header className="flex h-14 items-center justify-between border-b border-border px-4">
           <div className="flex gap-1">
             <TabBtn active={tab === 'friends'} onClick={() => setTab('friends')}>朋友</TabBtn>
             <TabBtn active={tab === 'requests'} onClick={() => setTab('requests')}>
@@ -51,7 +51,7 @@ export function ContactsView() {
           <button
             onClick={() => setShowCreate(true)}
             title="发起群聊"
-            className="rounded p-1.5 text-wechat-subtext hover:bg-black/5 hover:text-wechat-green"
+            className="rounded p-1.5 text-subtext hover:bg-black/5 hover:text-primary"
           >
             <Users size={18} />
           </button>
@@ -75,7 +75,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
       onClick={onClick}
       className={cn(
         'flex items-center rounded-md px-3 py-1.5 text-sm transition',
-        active ? 'bg-wechat-green/10 text-wechat-green' : 'text-wechat-subtext hover:bg-black/5',
+        active ? 'bg-primary/10 text-primary' : 'text-subtext hover:bg-black/5',
       )}
     >
       {children}
@@ -90,7 +90,7 @@ function FriendsTab({
   friends?: FriendshipView[];
   onSelect: (f: FriendshipView) => void;
 }) {
-  if (!friends) return <div className="p-4 text-center text-sm text-wechat-subtext">加载中…</div>;
+  if (!friends) return <div className="p-4 text-center text-sm text-subtext">加载中…</div>;
   if (friends.length === 0) return <EmptyState title="还没有好友" hint="去「搜索」添加好友吧" />;
   const sorted = [...friends].sort((a, b) =>
     (a.remark || a.friend.nickname).localeCompare(b.remark || b.friend.nickname, 'zh'),
@@ -101,18 +101,18 @@ function FriendsTab({
         <button
           key={f.id}
           onClick={() => onSelect(f)}
-          className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-wechat-panel"
+          className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-panel"
         >
           <Avatar src={f.friend.avatar} name={f.remark || f.friend.nickname} size={40} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">
               {f.remark || f.friend.nickname}
-              {f.remark && <span className="ml-2 text-xs text-wechat-subtext">{f.friend.nickname}</span>}
+              {f.remark && <span className="ml-2 text-xs text-subtext">{f.friend.nickname}</span>}
             </div>
             {f.tags.length > 0 && (
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {f.tags.map((t) => (
-                  <span key={t.tag.id} className="rounded bg-wechat-green/10 px-1.5 text-[10px] text-wechat-green">
+                  <span key={t.tag.id} className="rounded bg-primary/10 px-1.5 text-[10px] text-primary">
                     {t.tag.name}
                   </span>
                 ))}
@@ -148,25 +148,25 @@ function RequestsTab() {
     }
   }
 
-  if (isLoading) return <div className="p-4 text-center text-sm text-wechat-subtext">加载中…</div>;
+  if (isLoading) return <div className="p-4 text-center text-sm text-subtext">加载中…</div>;
   if (!data || data.length === 0) return <EmptyState title="没有新的好友请求" />;
 
   return (
     <div className="py-1">
       {data.map((r) => (
-        <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-wechat-panel">
+        <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-panel">
           <Avatar src={r.from.avatar} name={r.from.nickname} size={40} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">{r.from.nickname}</div>
-            <div className="truncate text-xs text-wechat-subtext">
+            <div className="truncate text-xs text-subtext">
               {r.message || `我是 ${r.from.nickname}`}
             </div>
           </div>
           <div className="flex gap-1">
-            <button onClick={() => act(r.id, true)} className="rounded-md bg-wechat-green px-3 py-1 text-xs text-white hover:bg-wechat-greenDark">
+            <button onClick={() => act(r.id, true)} className="rounded-md bg-primary px-3 py-1 text-xs text-white hover:bg-primary-hover">
               接受
             </button>
-            <button onClick={() => act(r.id, false)} className="rounded-md border border-wechat-border px-3 py-1 text-xs hover:bg-wechat-panel">
+            <button onClick={() => act(r.id, false)} className="rounded-md border border-border px-3 py-1 text-xs hover:bg-panel">
               拒绝
             </button>
           </div>
@@ -212,14 +212,14 @@ function SearchTab() {
       </div>
       <div className="mt-4">
         {results.length === 0 && q && !searching && (
-          <p className="text-center text-sm text-wechat-subtext">没有找到用户</p>
+          <p className="text-center text-sm text-subtext">没有找到用户</p>
         )}
         {results.map((u) => (
           <div key={u.id} className="flex items-center gap-3 py-2.5">
             <Avatar src={u.avatar} name={u.nickname} size={40} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{u.nickname}</div>
-              <div className="text-xs text-wechat-subtext">@{u.username}</div>
+              <div className="text-xs text-subtext">@{u.username}</div>
             </div>
             <Button size="sm" variant="outline" onClick={() => add(u.id)}>
               <UserPlus size={14} /> 加好友

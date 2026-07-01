@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useThemeStore } from '@/lib/theme-store';
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket';
 import { Toaster } from '@/components/toaster';
 
@@ -19,11 +20,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const init = useAuthStore((s) => s.init);
   const accessToken = useAuthStore((s) => s.accessToken);
   const logout = useAuthStore((s) => s.logout);
+  const initTheme = useThemeStore((s) => s.init);
   const connected = useRef(false);
 
   useEffect(() => {
     init();
-  }, [init]);
+    initTheme();
+  }, [init, initTheme]);
 
   useEffect(() => {
     if (accessToken && !connected.current) {

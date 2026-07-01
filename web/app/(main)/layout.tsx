@@ -28,8 +28,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   if (!ready || !accessToken) {
     return (
-      <div className="flex h-screen items-center justify-center bg-wechat-bg">
-        <Spinner className="h-8 w-8 text-wechat-green" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner className="h-8 w-8 text-primary" />
       </div>
     );
   }

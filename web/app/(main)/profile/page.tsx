@@ -63,9 +63,9 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="flex h-full w-full justify-center bg-wechat-bg">
+    <div className="flex h-full w-full justify-center bg-background">
       <div className="w-full max-w-md bg-white">
-        <header className="flex h-14 items-center border-b border-wechat-border px-5">
+        <header className="flex h-14 items-center border-b border-border px-5">
           <h1 className="text-lg font-semibold">个人信息</h1>
         </header>
 
@@ -73,12 +73,12 @@ export default function ProfilePage() {
           <div className="flex flex-col items-center gap-3">
             <button onClick={() => avatarInput.current?.click()} className="relative" title="更换头像">
               <Avatar src={user.avatar} name={user.nickname} size={80} />
-              <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-wechat-green text-white ring-2 ring-white">
+              <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white">
                 <Camera size={12} />
               </span>
             </button>
             <input ref={avatarInput} type="file" accept="image/*" hidden onChange={onAvatar} />
-            <div className="text-sm text-wechat-subtext">@{user.username}</div>
+            <div className="text-sm text-subtext">@{user.username}</div>
           </div>
 
           <div className="mt-6 space-y-4">
@@ -93,7 +93,7 @@ export default function ProfilePage() {
             </Button>
           </div>
 
-          <div className="mt-8 border-t border-wechat-border pt-4">
+          <div className="mt-8 border-t border-border pt-4">
             <button
               onClick={doLogout}
               className="flex w-full items-center justify-center gap-2 rounded-md border border-red-200 py-2.5 text-sm text-red-500 hover:bg-red-50"
@@ -110,7 +110,7 @@ export default function ProfilePage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-wechat-subtext">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-subtext">{label}</label>
       {children}
     </div>
   );

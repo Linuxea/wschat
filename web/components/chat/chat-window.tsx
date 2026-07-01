@@ -109,34 +109,34 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
   return (
     <div className="flex h-full flex-col">
       {/* header */}
-      <header className="relative flex h-14 items-center justify-between border-b border-wechat-border bg-wechat-panel px-4">
+      <header className="relative flex h-14 items-center justify-between border-b border-border bg-panel px-4 backdrop-blur-xl">
         <div className="min-w-0">
-          <div className="truncate font-medium text-wechat-text">{disp.name}</div>
+          <div className="truncate font-medium text-text">{disp.name}</div>
           {conv.type === 'GROUP' && (
-            <div className="text-[11px] text-wechat-subtext">{conv.members.length} 位成员</div>
+            <div className="text-[11px] text-subtext">{conv.members.length} 位成员</div>
           )}
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => startCall(conversationId).catch((e) => toast(e.message, 'error'))}
-            className="rounded p-1.5 text-wechat-subtext hover:bg-black/5 hover:text-wechat-green"
+            className="rounded p-1.5 text-subtext hover:bg-black/5 hover:text-primary"
             title="视频通话"
           >
             <Video size={18} />
           </button>
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="rounded p-1.5 text-wechat-subtext hover:bg-black/5"
+            className="rounded p-1.5 text-subtext hover:bg-black/5"
             title="搜索"
           >
             <Search size={18} />
           </button>
           <div className="relative">
-            <button onClick={() => setMenuOpen((v) => !v)} className="rounded p-1.5 text-wechat-subtext hover:bg-black/5">
+            <button onClick={() => setMenuOpen((v) => !v)} className="rounded p-1.5 text-subtext hover:bg-black/5">
               <MoreVertical size={18} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-wechat-border bg-white py-1 text-sm shadow-lg">
+              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-border bg-white py-1 text-sm shadow-lg">
                 <MenuItem icon={<Pin size={14} />} label={conv.pinned ? '取消置顶' : '置顶'} onClick={() => togglePin()} />
                 <MenuItem
                   icon={<BellOff size={14} />}
@@ -155,15 +155,15 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
       </header>
 
       {searchOpen && (
-        <div className="flex items-center gap-2 border-b border-wechat-border bg-white px-4 py-2">
+        <div className="flex items-center gap-2 border-b border-border bg-white px-4 py-2">
           <input
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && doSearch()}
             placeholder="搜索聊天记录…"
-            className="h-8 flex-1 rounded border border-wechat-border px-2 text-sm outline-none focus:border-wechat-green"
+            className="h-8 flex-1 rounded border border-border px-2 text-sm outline-none focus:border-primary"
           />
-          <button onClick={doSearch} className="rounded bg-wechat-green px-3 py-1 text-xs text-white">搜索</button>
+          <button onClick={doSearch} className="rounded bg-primary px-3 py-1 text-xs text-white">搜索</button>
         </div>
       )}
 
@@ -197,7 +197,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-2 px-3 py-2 text-left text-wechat-text hover:bg-wechat-panel"
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-text hover:bg-panel"
     >
       {icon}
       {label}

@@ -118,7 +118,7 @@ export function FriendDetail({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">好友详情</h2>
-          <button onClick={onClose} className="text-wechat-subtext hover:text-wechat-text">
+          <button onClick={onClose} className="text-subtext hover:text-text">
             <X size={18} />
           </button>
         </div>
@@ -127,14 +127,14 @@ export function FriendDetail({
           <Avatar src={fs.friend.avatar} name={fs.friend.nickname} size={56} />
           <div className="min-w-0">
             <div className="truncate font-medium">{fs.remark || fs.friend.nickname}</div>
-            <div className="text-xs text-wechat-subtext">@{fs.friend.username}</div>
-            {fs.friend.bio && <div className="truncate text-xs text-wechat-subtext">{fs.friend.bio}</div>}
+            <div className="text-xs text-subtext">@{fs.friend.username}</div>
+            {fs.friend.bio && <div className="truncate text-xs text-subtext">{fs.friend.bio}</div>}
           </div>
         </div>
 
         <button
           onClick={startChat}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-wechat-green py-2 text-sm text-white hover:bg-wechat-greenDark"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2 text-sm text-white hover:bg-primary-hover"
         >
           <MessageCircle size={16} /> 发消息
         </button>
@@ -158,7 +158,7 @@ export function FriendDetail({
                   onClick={() => toggleTag(t.id, !sel)}
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs',
-                    sel ? 'border-wechat-green bg-wechat-green/10 text-wechat-green' : 'border-wechat-border text-wechat-subtext',
+                    sel ? 'border-primary bg-primary/10 text-primary' : 'border-border text-subtext',
                   )}
                 >
                   {t.name}
@@ -193,7 +193,7 @@ export function FriendDetail({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-4">
-      <div className="mb-2 text-xs font-medium text-wechat-subtext">{title}</div>
+      <div className="mb-2 text-xs font-medium text-subtext">{title}</div>
       {children}
     </div>
   );
@@ -217,7 +217,7 @@ function ActionRow({
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm',
-        danger ? 'text-red-500 hover:bg-red-50' : active ? 'bg-wechat-green/10 text-wechat-green' : 'hover:bg-wechat-panel',
+        danger ? 'text-red-500 hover:bg-red-50' : active ? 'bg-primary/10 text-primary' : 'hover:bg-panel',
       )}
     >
       {icon}

@@ -2,7 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/*
+ * Theme tokens — values live here, components only reference semantic names.
+ * To add a theme: copy a [data-theme='...'] block and swap the values.
+ * P1/P2 keep legacy green values so the rename is visually a no-op;
+ * P3 swaps these to the real macOS palette.
+ */
+:root,
+:root[data-theme='macos'] {
+  --primary: #007aff; /* macOS system blue */
+  --primary-hover: #0066d6;
+  --background: #ececec; /* app backdrop; lets frosted panels read */
+  --surface: #ffffff;
+  --panel: rgba(246, 246, 246, 0.72); /* frosted sidebar/panel */
+  --border: rgba(0, 0, 0, 0.08); /* macOS hairline separator */
+  --text: #1d1d1f; /* Apple near-black */
+  --subtext: #86868b; /* Apple secondary gray */
+  --chatbg: #f7f7f7; /* chat content area */
+  --bubble-self: #0a84ff; /* macOS Messages blue bubble */
+  --bubble-other: #e9e9eb; /* macOS Messages gray bubble */
+  --rail: rgba(245, 245, 247, 0.6); /* light frosted icon rail */
+
+  --radius: 0.625rem; /* 10px */
+  --radius-bubble: 0.875rem; /* 14px */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-soft-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --shadow-soft-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+
   color-scheme: light;
 }
 
@@ -12,10 +38,12 @@ body {
 }
 
 body {
-  @apply bg-wechat-bg text-wechat-text font-sans antialiased;
+  @apply bg-background text-text font-sans antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Thin wechat-like scrollbars */
+/* Thin scrollbars */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;

@@ -51,15 +51,15 @@ export default function RegisterPage() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <h1 className="text-xl font-semibold text-wechat-text">注册</h1>
+      <h1 className="text-xl font-semibold text-text">注册</h1>
       <div className="space-y-3">
         <Input placeholder="用户名 (3-20 位字母数字)" value={form.username} onChange={(e) => update('username', e.target.value)} />
         <Input type="password" placeholder="密码 (至少 6 位)" value={form.password} onChange={(e) => update('password', e.target.value)} />
         <Input placeholder="昵称" value={form.nickname} onChange={(e) => update('nickname', e.target.value)} />
         <div>
-          <label className="mb-1 block text-xs text-wechat-subtext">密保问题</label>
+          <label className="mb-1 block text-xs text-subtext">密保问题</label>
           <select
-            className="h-10 w-full rounded-md border border-wechat-border bg-white px-3 text-sm outline-none focus:border-wechat-green"
+            className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-primary"
             value={form.securityQuestion}
             onChange={(e) => update('securityQuestion', e.target.value)}
           >
@@ -73,9 +73,9 @@ export default function RegisterPage() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? '注册中…' : '注册'}
       </Button>
-      <div className="text-center text-sm text-wechat-subtext">
+      <div className="text-center text-sm text-subtext">
         已有账号？{' '}
-        <Link href="/login" className="text-wechat-green hover:underline">去登录</Link>
+        <Link href="/login" className="text-primary hover:underline">去登录</Link>
       </div>
     </form>
   );

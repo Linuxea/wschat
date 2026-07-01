@@ -73,13 +73,13 @@ export function MomentCard({ moment }: { moment: MomentView }) {
       <Avatar src={moment.author.avatar} name={moment.author.nickname} size={42} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-wechat-green">{moment.author.nickname}</span>
-          <span className="rounded bg-black/5 px-1.5 text-[10px] text-wechat-subtext">
+          <span className="font-medium text-primary">{moment.author.nickname}</span>
+          <span className="rounded bg-black/5 px-1.5 text-[10px] text-subtext">
             {VIS_LABEL[moment.visibility] || moment.visibility}
           </span>
         </div>
 
-        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-wechat-text">{moment.content}</p>
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-text">{moment.content}</p>
 
         {moment.media && moment.media.length > 0 && (
           <div className="mt-2 grid grid-cols-3 gap-1">
@@ -96,15 +96,15 @@ export function MomentCard({ moment }: { moment: MomentView }) {
           </div>
         )}
 
-        <div className="mt-1 text-xs text-wechat-subtext">{formatTime(moment.createdAt)}</div>
+        <div className="mt-1 text-xs text-subtext">{formatTime(moment.createdAt)}</div>
 
         {/* actions */}
-        <div className="mt-2 flex items-center gap-3 text-wechat-subtext">
-          <button onClick={like} className={cn('flex items-center gap-1 text-xs hover:text-wechat-green', moment.likedByMe && 'text-wechat-green')}>
+        <div className="mt-2 flex items-center gap-3 text-subtext">
+          <button onClick={like} className={cn('flex items-center gap-1 text-xs hover:text-primary', moment.likedByMe && 'text-primary')}>
             <Heart size={14} fill={moment.likedByMe ? 'currentColor' : 'none'} />
             {moment.likeCount > 0 && moment.likeCount}
           </button>
-          <button onClick={() => setCommenting((v) => !v)} className="flex items-center gap-1 text-xs hover:text-wechat-green">
+          <button onClick={() => setCommenting((v) => !v)} className="flex items-center gap-1 text-xs hover:text-primary">
             <MessageCircle size={14} />
             {moment.commentCount > 0 && moment.commentCount}
           </button>
@@ -117,7 +117,7 @@ export function MomentCard({ moment }: { moment: MomentView }) {
 
         {/* comments */}
         {(moment.comments.length > 0 || commenting) && (
-          <div className="mt-2 rounded-md bg-wechat-panel p-2">
+          <div className="mt-2 rounded-md bg-panel p-2">
             {moment.comments.map((c) => (
               <div
                 key={c.id}
@@ -127,23 +127,23 @@ export function MomentCard({ moment }: { moment: MomentView }) {
                   setCommenting(true);
                 }}
               >
-                <span className="font-medium text-wechat-green">{c.user.nickname}</span>
+                <span className="font-medium text-primary">{c.user.nickname}</span>
                 {c.replyToUserId && c.replyToUserId !== c.user.id && (
-                  <span className="text-wechat-subtext">
+                  <span className="text-subtext">
                     {' '}回复 {userNames.get(c.replyToUserId) ?? '该用户'}
                   </span>
                 )}
-                <span className="text-wechat-text">：{c.content}</span>
+                <span className="text-text">：{c.content}</span>
               </div>
             ))}
             {commenting && (
               <div className="mt-2">
                 {replyTo && (
-                  <div className="mb-1 flex items-center justify-between text-[11px] text-wechat-subtext">
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-subtext">
                     <span>回复 {replyTo.nickname}</span>
                     <button
                       onClick={() => setReplyTo(null)}
-                      className="text-wechat-subtext hover:text-wechat-text"
+                      className="text-subtext hover:text-text"
                     >
                       取消回复
                     </button>
@@ -158,7 +158,7 @@ export function MomentCard({ moment }: { moment: MomentView }) {
                     className="h-8 text-xs"
                     autoFocus
                   />
-                  <button onClick={sendComment} className="rounded bg-wechat-green px-3 text-xs text-white">
+                  <button onClick={sendComment} className="rounded bg-primary px-3 text-xs text-white">
                     发送
                   </button>
                 </div>

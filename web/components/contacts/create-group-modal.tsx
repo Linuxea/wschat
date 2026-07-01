@@ -53,12 +53,12 @@ export function CreateGroupModal({ onClose }: { onClose: () => void }) {
       <div className="w-[380px] rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">发起群聊</h2>
-          <button onClick={onClose} className="text-wechat-subtext hover:text-wechat-text">
+          <button onClick={onClose} className="text-subtext hover:text-text">
             <X size={18} />
           </button>
         </div>
         <Input placeholder="群名称" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-        <div className="mt-2 text-xs text-wechat-subtext">
+        <div className="mt-2 text-xs text-subtext">
           已选 {selected.size} 位成员（至少 1 位）
         </div>
         <div className="scrollbar-thin mt-2 max-h-64 overflow-y-auto">
@@ -68,18 +68,18 @@ export function CreateGroupModal({ onClose }: { onClose: () => void }) {
               <button
                 key={f.id}
                 onClick={() => toggle(f.friendId)}
-                className={cn('flex w-full items-center gap-2 rounded px-2 py-2 hover:bg-wechat-panel', sel && 'bg-wechat-green/5')}
+                className={cn('flex w-full items-center gap-2 rounded px-2 py-2 hover:bg-panel', sel && 'bg-primary/5')}
               >
                 <Avatar src={f.friend.avatar} name={f.remark || f.friend.nickname} size={32} />
                 <span className="flex-1 text-left text-sm">{f.remark || f.friend.nickname}</span>
-                <span className={cn('flex h-4 w-4 items-center justify-center rounded-full border text-[10px] text-white', sel ? 'border-wechat-green bg-wechat-green' : 'border-wechat-border')}>
+                <span className={cn('flex h-4 w-4 items-center justify-center rounded-full border text-[10px] text-white', sel ? 'border-primary bg-primary' : 'border-border')}>
                   {sel && '✓'}
                 </span>
               </button>
             );
           })}
           {friends && friends.length === 0 && (
-            <p className="py-6 text-center text-sm text-wechat-subtext">还没有好友</p>
+            <p className="py-6 text-center text-sm text-subtext">还没有好友</p>
           )}
         </div>
         <div className="mt-3 flex justify-end gap-2">

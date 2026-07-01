@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <h1 className="text-xl font-semibold text-wechat-text">登录</h1>
+      <h1 className="text-xl font-semibold text-text">登录</h1>
       <div className="space-y-3">
         <Input placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
         <Input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -43,9 +43,9 @@ export default function LoginPage() {
       <Button type="submit" className="w-full" disabled={loading || !username || !password}>
         {loading ? '登录中…' : '登录'}
       </Button>
-      <div className="flex items-center justify-between text-sm text-wechat-subtext">
-        <Link href="/register" className="hover:text-wechat-green">注册新账号</Link>
-        <Link href="/forgot-password" className="hover:text-wechat-green">忘记密码？</Link>
+      <div className="flex items-center justify-between text-sm text-subtext">
+        <Link href="/register" className="hover:text-primary">注册新账号</Link>
+        <Link href="/forgot-password" className="hover:text-primary">忘记密码？</Link>
       </div>
     </form>
   );

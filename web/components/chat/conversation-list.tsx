@@ -45,11 +45,11 @@ export function ConversationList() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 items-center justify-between border-b border-wechat-border px-4">
-        <span className="font-medium text-wechat-text">微信</span>
+      <header className="flex h-14 items-center justify-between border-b border-border px-4">
+        <span className="font-medium text-text">微信</span>
         <button
           onClick={() => router.push('/contacts?action=search')}
-          className="text-wechat-subtext transition hover:text-wechat-green"
+          className="text-subtext transition hover:text-primary"
           title="添加"
         >
           <Search size={18} />
@@ -57,7 +57,7 @@ export function ConversationList() {
       </header>
       <div className="scrollbar-thin flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-center text-sm text-wechat-subtext">加载中…</div>
+          <div className="p-4 text-center text-sm text-subtext">加载中…</div>
         ) : !conversations || conversations.length === 0 ? (
           <EmptyState title="还没有会话" hint="去通讯录添加好友开始聊天" />
         ) : (
@@ -70,7 +70,7 @@ export function ConversationList() {
                 onClick={() => router.push(`/chat/${c.id}`)}
                 className={cn(
                   'flex w-full items-center gap-3 px-3 py-3 text-left transition-colors',
-                  active ? 'bg-wechat-bg' : 'hover:bg-wechat-panel',
+                  active ? 'bg-background' : 'hover:bg-panel',
                 )}
               >
                 <div className="relative">
@@ -83,17 +83,17 @@ export function ConversationList() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-wechat-text">{disp.name}</span>
+                    <span className="truncate text-sm font-medium text-text">{disp.name}</span>
                     {c.lastMessage && (
-                      <span className="shrink-0 text-[11px] text-wechat-subtext">
+                      <span className="shrink-0 text-[11px] text-subtext">
                         {formatTime(c.lastMessage.createdAt)}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    {c.pinned && <span className="text-[10px] text-wechat-subtext">📌</span>}
+                    {c.pinned && <span className="text-[10px] text-subtext">📌</span>}
                     {c.muted && <span className="text-[10px]">🔇</span>}
-                    <p className="truncate text-xs text-wechat-subtext">
+                    <p className="truncate text-xs text-subtext">
                       {c.lastMessage?.preview || '暂无消息'}
                     </p>
                   </div>

@@ -23,11 +23,11 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
     <div className={cn('group flex gap-2 px-4 py-1.5', isMine ? 'flex-row-reverse' : 'flex-row')}>
       <Avatar src={sender?.avatar} name={sender?.nickname || sender?.username || '?'} size={38} />
       <div className={cn('flex max-w-[70%] flex-col', isMine ? 'items-end' : 'items-start')}>
-        <div className="mb-0.5 flex items-center gap-1.5 text-[11px] text-wechat-subtext">
+        <div className="mb-0.5 flex items-center gap-1.5 text-[11px] text-subtext">
           {isMine ? '我' : sender?.nickname || sender?.username}
         </div>
         {replyTarget && (
-          <div className="mb-1 max-w-full truncate rounded bg-black/5 px-2 py-0.5 text-[11px] text-wechat-subtext">
+          <div className="mb-1 max-w-full truncate rounded bg-black/5 px-2 py-0.5 text-[11px] text-subtext">
             回复 {replyTarget.senderId === msg.senderId ? '自己' : ''}: {replyTarget.content.slice(0, 30)}
           </div>
         )}
@@ -42,7 +42,7 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
           )}
           <MessageBody msg={msg} isMine={isMine} onReply={onReply} />
         </div>
-        <span className="mt-0.5 text-[10px] text-wechat-subtext opacity-0 transition group-hover:opacity-100">
+        <span className="mt-0.5 text-[10px] text-subtext opacity-0 transition group-hover:opacity-100">
           {formatTime(msg.createdAt)}
         </span>
       </div>
@@ -52,7 +52,7 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
 
 function MessageBody({ msg, isMine, onReply }: { msg: MessageView; isMine: boolean; onReply?: (m: MessageView) => void }) {
   if (msg.deletedAt) {
-    return <span className="text-xs text-wechat-subtext">该消息已撤回</span>;
+    return <span className="text-xs text-subtext">该消息已撤回</span>;
   }
   let node: React.ReactNode;
   switch (msg.type) {
@@ -96,8 +96,8 @@ function MessageBody({ msg, isMine, onReply }: { msg: MessageView; isMine: boole
     <div
       onDoubleClick={() => msg.type === 'TEXT' && onReply?.(msg)}
       className={cn(
-        'inline-block rounded-lg px-3 py-2 text-sm shadow-sm',
-        isMine ? 'bg-wechat-mybubble text-wechat-text' : 'bg-white text-wechat-text',
+        'inline-block rounded-bubble px-3 py-2 text-sm shadow-soft',
+        isMine ? 'bg-bubble-self text-white' : 'bg-bubble-other text-text',
       )}
     >
       {node}

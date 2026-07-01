@@ -51,7 +51,7 @@ function Toast({ item, onClose }: { item: ToastItem; onClose: () => void }) {
       onClick={onClose}
       className={cn(
         'pointer-events-auto cursor-pointer animate-slide-up rounded-lg px-4 py-2.5 text-sm text-white shadow-lg max-w-sm',
-        item.type === 'error' ? 'bg-red-500' : item.type === 'success' ? 'bg-wechat-green' : 'bg-gray-800',
+        item.type === 'error' ? 'bg-red-500' : item.type === 'success' ? 'bg-primary' : 'bg-gray-800',
       )}
     >
       {item.message}

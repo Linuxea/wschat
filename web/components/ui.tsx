@@ -9,11 +9,11 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-wechat-green text-white hover:bg-wechat-greenDark',
-        outline: 'border border-wechat-border bg-white hover:bg-wechat-panel text-wechat-text',
-        ghost: 'hover:bg-black/5 text-wechat-text',
+        default: 'bg-primary text-white hover:bg-primary-hover',
+        outline: 'border border-border bg-white hover:bg-panel text-text',
+        ghost: 'hover:bg-black/5 text-text',
         danger: 'bg-red-500 text-white hover:bg-red-600',
-        subtle: 'bg-wechat-panel hover:bg-black/5 text-wechat-text',
+        subtle: 'bg-panel hover:bg-black/5 text-text',
       },
       size: {
         sm: 'h-8 px-3 text-sm',
@@ -42,9 +42,9 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cn(
-        'h-10 w-full rounded-md border border-wechat-border bg-white px-3 text-sm outline-none transition',
-        'focus:border-wechat-green focus:ring-2 focus:ring-wechat-green/20',
-        'placeholder:text-wechat-subtext',
+        'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none transition',
+        'focus:border-primary focus:ring-2 focus:ring-primary/20',
+        'placeholder:text-subtext',
         className,
       )}
       {...props}
@@ -58,9 +58,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
     <textarea
       ref={ref}
       className={cn(
-        'w-full rounded-md border border-wechat-border bg-white px-3 py-2 text-sm outline-none transition resize-none',
-        'focus:border-wechat-green focus:ring-2 focus:ring-wechat-green/20',
-        'placeholder:text-wechat-subtext',
+        'w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none transition resize-none',
+        'focus:border-primary focus:ring-2 focus:ring-primary/20',
+        'placeholder:text-subtext',
         className,
       )}
       {...props}
@@ -113,7 +113,7 @@ export function Spinner({ className }: { className?: string }) {
 
 export function EmptyState({ icon, title, hint }: { icon?: React.ReactNode; title: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center text-wechat-subtext">
+    <div className="flex flex-col items-center justify-center py-16 text-center text-subtext">
       {icon && <div className="mb-3 text-4xl opacity-60">{icon}</div>}
       <p className="text-sm font-medium">{title}</p>
       {hint && <p className="mt-1 text-xs">{hint}</p>}
