@@ -1,0 +1,281 @@
+// wschat Prisma schema — covers all milestones (auth/friends/chat/groups/calls/moments)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// User & Auth
+// ============================================================
+
+model User {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  passwordHash       String
+  nickname           String
+  avatar             String?
+  bio                String?
+  securityQuestion   String
+  securityAnswerHash String
+  tokenVersion       Int      @default(1) // bump to invalidate all existing tokens
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  sentFriendRequests     FriendRequest[]    @relation("FriendRequestFrom")
+  receivedFriendRequests FriendRequest[]    @relation("FriendRequestTo")
+  friendships            Friendship[]       @relation("FriendshipOwner")
+  friendshipsOf          Friendship[]       @relation("FriendshipFriend")
+  tags                   Tag[]
+  memberships            ConversationMember[]
+  messages               Message[]
+  ownedConversations     Conversation[]     @relation("ConversationOwner")
+  moments                Moment[]
+  momentLikes            MomentLike[]
+  momentComments         MomentComment[]
+  callRecords            CallRecord[]       @relation("CallCaller")
+
+  @@index([username])
+}
+
+// ============================================================
+// Friends, tags, blocklist
+// ============================================================
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model FriendRequest {
+  id        String             @id @default(uuid())
+  fromId    String
+  toId      String
+  message   String?
+  status    FriendRequestStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  from User @relation("FriendRequestFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   User @relation("FriendRequestTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId, status])
+  @@index([fromId, status])
+}
+
+// Directed: owner's view of `friend`.
+model Friendship {
+  id             String   @id @default(uuid())
+  ownerId        String
+  friendId       String
+  remark         String? // 备注 (alias)
+  isBlocked      Boolean  @default(false) // owner blocked friend (intercepts friend->owner messages)
+  momentsBlocked Boolean  @default(false) // owner hides friend's moments from feed
+  createdAt      DateTime @default(now())
+
+  owner User @relation("FriendshipOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendshipFriend", fields: [friendId], references: [id], onDelete: Cascade)
+  tags  FriendTag[]
+
+  @@unique([ownerId, friendId])
+  @@index([ownerId])
+  @@index([friendId])
+}
+
+model Tag {
+  id        String      @id @default(uuid())
+  ownerId   String
+  name      String
+  createdAt DateTime    @default(now())
+
+  owner   User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  friends FriendTag[]
+
+  @@unique([ownerId, name])
+}
+
+model FriendTag {
+  friendshipId String
+  tagId        String
+
+  friendship Friendship @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
+  tag         Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([friendshipId, tagId])
+}
+
+// ============================================================
+// Conversations & Messages
+// ============================================================
+
+enum ConversationType {
+  PRIVATE
+  GROUP
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Conversation {
+  id            String           @id @default(uuid())
+  type          ConversationType
+  name          String? // group name
+  avatar        String?
+  ownerId       String? // group creator
+  announcement  String?
+  currentSeq    Int              @default(0) // monotonic per-conversation sequence
+  lastMessageAt DateTime         @default(now())
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  owner      User?                @relation("ConversationOwner", fields: [ownerId], references: [id])
+  members    ConversationMember[]
+  messages   Message[]
+  callRecords CallRecord[]
+
+  @@index([type])
+}
+
+model ConversationMember {
+  id             String    @id @default(uuid())
+  conversationId String
+  userId         String
+  role           MemberRole @default(MEMBER)
+  lastReadSeq    Int       @default(0)
+  isPinned       Boolean   @default(false)
+  isMuted        Boolean   @default(false)
+  joinedAt       DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  VIDEO
+  FILE
+  EMOJI
+  SYSTEM
+}
+
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String
+  senderId       String
+  type           MessageType
+  content        String // AES-256-GCM ciphertext (text or JSON payload)
+  iv             String // base64 nonce
+  authTag        String // base64 GCM tag
+  seq            Int // monotonic within conversation
+  clientMsgId    String // idempotency key
+  replyToId      String?
+  deletedAt      DateTime? // soft-delete = recall
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      Message?      @relation("MessageReply", fields: [replyToId], references: [id])
+  replies      Message[]     @relation("MessageReply")
+
+  @@unique([conversationId, seq])
+  @@unique([conversationId, clientMsgId])
+  @@index([conversationId, seq])
+  @@index([senderId])
+}
+
+// ============================================================
+// Video call records (LiveKit)
+// ============================================================
+
+enum CallStatus {
+  RINGING
+  ACCEPTED
+  REJECTED
+  MISSED
+  ENDED
+}
+
+model CallRecord {
+  id             String     @id @default(uuid())
+  conversationId String
+  callerId       String
+  roomName       String
+  status         CallStatus @default(RINGING)
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  caller       User          @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+// ============================================================
+// Moments (朋友圈)
+// ============================================================
+
+enum MomentVisibility {
+  PUBLIC // 公开
+  FRIENDS // 仅好友
+  PRIVATE // 仅自己
+  SPECIFIED // 指定可见
+}
+
+model Moment {
+  id           String           @id @default(uuid())
+  authorId     String
+  content      String // encrypted
+  iv           String
+  authTag      String
+  media        Json? // [{ type: 'image'|'video', url, width?, height? }]
+  visibility   MomentVisibility @default(FRIENDS)
+  specifiedIds String[] // when SPECIFIED: visible user ids
+  createdAt    DateTime         @default(now())
+
+  author   User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes    MomentLike[]
+  comments MomentComment[]
+
+  @@index([authorId, createdAt])
+}
+
+model MomentLike {
+  id        String   @id @default(uuid())
+  momentId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  moment Moment @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([momentId, userId])
+}
+
+model MomentComment {
+  id            String   @id @default(uuid())
+  momentId      String
+  userId        String
+  content       String
+  replyToUserId String?
+  createdAt     DateTime @default(now())
+
+  moment Moment @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([momentId])
+}

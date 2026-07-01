@@ -1,0 +1,22 @@
+{
+  "name": "wschat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WeChat-style web chat — full-stack demo (NestJS + Next.js + Postgres + Redis + LiveKit)",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:server": "pnpm --filter server dev",
+    "dev:web": "pnpm --filter web dev",
+    "build:server": "pnpm --filter server build",
+    "build:web": "pnpm --filter web build",
+    "db:migrate": "pnpm --filter server prisma:migrate",
+    "db:push": "pnpm --filter server prisma:push",
+    "db:studio": "pnpm --filter server prisma:studio",
+    "db:seed": "pnpm --filter server prisma:seed",
+    "up": "podman-compose up -d",
+    "down": "podman-compose down"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

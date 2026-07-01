@@ -1,0 +1,40 @@
+# deps
+node_modules/
+.pnp
+.yarn/
+
+# build
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# env (contains generated secrets)
+.env
+.env.local
+.env.*.local
+
+# livekit config holds the same API key/secret as .env — treat as secret
+livekit.yaml
+
+# prisma generated (keep schema, ignore generated client cache)
+server/prisma/migrations/dev.db*
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os/editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# coverage
+coverage/
+
+# podman/docker volumes
+.volumes/

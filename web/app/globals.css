@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-wechat-bg text-wechat-text font-sans antialiased;
+}
+
+/* Thin wechat-like scrollbars */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-black/15 rounded-full;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+/* Hide scrollbar when not hovered (chat lists) */
+.scrollbar-ghost::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-ghost:hover::-webkit-scrollbar-thumb {
+  @apply bg-black/15 rounded-full;
+}
+.scrollbar-ghost::-webkit-scrollbar-thumb {
+  background: transparent;
+}

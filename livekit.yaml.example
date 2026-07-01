@@ -1,0 +1,31 @@
+# LiveKit server dev config
+# Docs: https://docs.livekit.io/
+#
+# Copy to livekit.yaml and fill `keys` with the SAME key/secret you put in .env
+# (LIVEKIT_API_KEY / LIVEKIT_API_SECRET). Both sides must match or token
+# validation will fail.
+#   cp livekit.yaml.example livekit.yaml
+
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50050
+  use_external_ip: false
+  enable_loopback_candidate: true
+
+keys:
+  REPLACE_ME_API_KEY: REPLACE_ME_API_SECRET
+
+logging:
+  level: info
+
+room:
+  auto_create: true
+  empty_timeout: 300
+
+turn:
+  enabled: false
