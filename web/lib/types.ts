@@ -41,7 +41,7 @@ export interface MessageView {
   id: string;
   conversationId: string;
   senderId: string;
-  type: 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'FILE' | 'EMOJI' | 'SYSTEM';
+  type: 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'FILE' | 'EMOJI' | 'SYSTEM' | 'FORWARDED';
   content: string;
   seq: number;
   clientMsgId: string;

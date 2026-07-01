@@ -13,15 +13,52 @@ interface Props {
   onReply?: (msg: MessageView) => void;
   replyTarget?: MessageView | null;
   memberMap?: Map<string, ConversationMember>;
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  onForward?: (msg: MessageView) => void; // 单条快捷转发
+  onSelectStart?: (msg: MessageView) => void; // 进入多选模式并选中当前
 }
 
-export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTarget, memberMap }: Props) {
+export function MessageBubble({
+  msg,
+  isMine,
+  sender,
+  onRecall,
+  onReply,
+  replyTarget,
+  memberMap,
+  selectMode,
+  selected,
+  onToggleSelect,
+  onForward,
+  onSelectStart,
+}: Props) {
   const recalled = !!msg.deletedAt;
   const withinRecall =
     isMine && !recalled && Date.now() - new Date(msg.createdAt).getTime() < 2 * 60 * 1000;
 
   return (
-    <div className={cn('group flex gap-2 px-4 py-1.5', isMine ? 'flex-row-reverse' : 'flex-row')}>
+    <div
+      className={cn(
+        'group flex gap-2 px-4 py-1.5',
+        isMine ? 'flex-row-reverse' : 'flex-row',
+        selectMode && 'cursor-pointer',
+      )}
+      onClick={selectMode ? () => onToggleSelect?.(msg.id) : undefined}
+    >
+      {selectMode && (
+        <div className="flex items-center">
+          <span
+            className={cn(
+              'flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] font-bold text-white',
+              selected ? 'border-primary bg-primary' : 'border-gray-400 bg-white',
+            )}
+          >
+            {selected ? '✓' : ''}
+          </span>
+        </div>
+      )}
       <Avatar src={sender?.avatar} name={sender?.nickname || sender?.username || '?'} size={38} />
       <div className={cn('flex max-w-[70%] flex-col', isMine ? 'items-end' : 'items-start')}>
         <div className="mb-0.5 flex items-center gap-1.5 text-[11px] text-subtext">
@@ -33,13 +70,29 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
           </div>
         )}
         <div className="relative">
-          {!recalled && withinRecall && (
-            <button
-              onClick={() => onRecall?.(msg)}
-              className="absolute -top-7 right-0 rounded bg-black/70 px-2 py-0.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100"
-            >
-              撤回
-            </button>
+          {!recalled && !selectMode && (
+            <div className="absolute -top-7 right-0 flex gap-1 opacity-0 transition group-hover:opacity-100">
+              {withinRecall && (
+                <button
+                  onClick={() => onRecall?.(msg)}
+                  className="rounded bg-black/70 px-2 py-0.5 text-[10px] text-white"
+                >
+                  撤回
+                </button>
+              )}
+              <button
+                onClick={() => onForward?.(msg)}
+                className="rounded bg-black/70 px-2 py-0.5 text-[10px] text-white"
+              >
+                转发
+              </button>
+              <button
+                onClick={() => onSelectStart?.(msg)}
+                className="rounded bg-black/70 px-2 py-0.5 text-[10px] text-white"
+              >
+                多选
+              </button>
+            </div>
           )}
           <MessageBody msg={msg} isMine={isMine} onReply={onReply} memberMap={memberMap} />
         </div>
@@ -88,6 +141,11 @@ function MessageBody({ msg, isMine, onReply, memberMap }: { msg: MessageView; is
           📎 {p?.name || '文件'} {p?.size ? `(${Math.round(p.size / 1024)}KB)` : ''}
         </a>
       );
+      break;
+    }
+    case 'FORWARDED': {
+      const p = safeJson(msg.content);
+      node = <ForwardedCard bundle={p} />;
       break;
     }
     default:
@@ -179,6 +237,60 @@ function TextWithMentions({
         ),
       )}
     </span>
+  );
+}
+
+interface ForwardedItem {
+  senderName?: string;
+  senderId?: string;
+  type?: string;
+  content?: string;
+  ts?: number;
+}
+
+function previewForwardedItem(it: ForwardedItem): string {
+  switch (it.type) {
+    case 'TEXT':
+    case 'EMOJI':
+      return it.content || '';
+    case 'IMAGE':
+      return '[图片]';
+    case 'VOICE':
+      return '[语音]';
+    case 'VIDEO':
+      return '[视频]';
+    case 'FILE':
+      return '[文件]';
+    default:
+      return '[消息]';
+  }
+}
+
+function ForwardedCard({ bundle }: { bundle: { title?: string; items?: ForwardedItem[] } }) {
+  const [expanded, setExpanded] = useState(false);
+  const items = Array.isArray(bundle?.items) ? bundle.items : [];
+  if (items.length === 0) return <span className="text-xs text-subtext">[空的聊天记录]</span>;
+  const shown = expanded ? items : items.slice(0, 3);
+  return (
+    <div className="min-w-[200px] max-w-[240px]">
+      <div className="mb-1 text-xs font-medium text-subtext">{bundle?.title || '聊天记录'}</div>
+      <div className="space-y-1 border-t border-black/10 pt-1">
+        {shown.map((it, i) => (
+          <div key={i} className="text-xs">
+            <span className="font-medium">{it.senderName || '未知'}: </span>
+            <span className="text-subtext">{previewForwardedItem(it)}</span>
+          </div>
+        ))}
+      </div>
+      {items.length > 3 && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-[11px] text-primary hover:underline"
+        >
+          {expanded ? '收起' : `展开全部 ${items.length} 条`}
+        </button>
+      )}
+    </div>
   );
 }
 

@@ -40,6 +40,21 @@ export function tokenizeForSearch(text: string): string {
     .trim();
 }
 
+/** Extract searchable plaintext from a FORWARDED bundle (合并转发的聊天记录).
+ *  Only TEXT/EMOJI items contribute; media items carry no searchable text. */
+function extractForwardedText(content: string): string {
+  try {
+    const parsed = JSON.parse(content) as { items?: Array<{ type?: string; content?: unknown }> };
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    return items
+      .map((it) => (it.type === 'TEXT' || it.type === 'EMOJI' ? String(it.content ?? '') : ''))
+      .filter(Boolean)
+      .join(' ');
+  } catch {
+    return '';
+  }
+}
+
 @Injectable()
 export class MessagesService {
   constructor(
@@ -105,9 +120,12 @@ export class MessagesService {
     // 5. encrypt content
     const enc = this.crypto.encrypt(dto.content);
     const id = nanoid(12);
-    const tsv = dto.type === MessageType.TEXT || dto.type === MessageType.EMOJI
-      ? tokenizeForSearch(dto.content)
-      : '';
+    const tsv =
+      dto.type === MessageType.TEXT || dto.type === MessageType.EMOJI
+        ? tokenizeForSearch(dto.content)
+        : dto.type === MessageType.FORWARDED
+          ? tokenizeForSearch(extractForwardedText(dto.content))
+          : '';
 
     // 6. raw INSERT (writes content_tsv at insert time using the plaintext tokenization)
     const mentions = dto.mentions ?? [];

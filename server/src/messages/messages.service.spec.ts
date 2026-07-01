@@ -111,7 +111,7 @@ describe('MessagesService', () => {
       });
     });
 
-    describe('tsv / tokenizeForSearch applied only for TEXT/EMOJI', () => {
+    describe('tsv / tokenizeForSearch applied for TEXT/EMOJI/FORWARDED', () => {
       beforeEach(() => {
         prisma.conversationMember.findUnique.mockResolvedValue({ userId: 'u1' });
         prisma.message.findUnique.mockResolvedValue(null);
@@ -133,6 +133,30 @@ describe('MessagesService', () => {
         await svc.send('u1', dto({ content: 'x', type: MessageType.IMAGE }));
         const values = prisma.$executeRaw.mock.calls[0].slice(1);
         // to_tsvector('simple', '') -> the tsv interpolated value is ''
+        expect(values).toContain('');
+      });
+
+      it('tokenizes text from FORWARDED bundle items (合并转发内容可搜)', async () => {
+        const bundle = JSON.stringify({
+          title: '聊天记录',
+          items: [
+            { senderName: 'A', senderId: 'u2', type: 'TEXT', content: '你好消息', ts: 1 },
+            { senderName: 'B', senderId: 'u3', type: 'IMAGE', content: '{"url":"x"}', ts: 2 },
+          ],
+        });
+        await svc.send('u1', dto({ content: bundle, type: MessageType.FORWARDED }));
+        const values = prisma.$executeRaw.mock.calls[0].slice(1);
+        // tsv comes from the TEXT item's CJK content, not the raw JSON
+        expect(values.some((v: any) => typeof v === 'string' && v.includes('你') && v.includes('好'))).toBe(true);
+      });
+
+      it('passes empty tsv for FORWARDED with no TEXT/EMOJI items', async () => {
+        const bundle = JSON.stringify({
+          title: '聊天记录',
+          items: [{ senderName: 'A', senderId: 'u2', type: 'IMAGE', content: '{"url":"x"}', ts: 1 }],
+        });
+        await svc.send('u1', dto({ content: bundle, type: MessageType.FORWARDED }));
+        const values = prisma.$executeRaw.mock.calls[0].slice(1);
         expect(values).toContain('');
       });
     });

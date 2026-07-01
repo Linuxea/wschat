@@ -172,6 +172,7 @@ enum MessageType {
   FILE
   EMOJI
   SYSTEM
+  FORWARDED
 }
 
 model Message {

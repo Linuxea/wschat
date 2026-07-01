@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Video, MoreVertical, Pin, BellOff, Search, Trash2 } from 'lucide-react';
+import { Video, MoreVertical, Pin, BellOff, Search, Trash2, X, Forward } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getSocket, recallMessage } from '@/lib/socket';
 import { useAuthStore } from '@/lib/auth-store';
@@ -12,8 +12,9 @@ import { toast } from '@/components/toaster';
 import { Avatar, EmptyState } from '@/components/ui';
 import { MessageBubble } from './message-bubble';
 import { MessageInput } from './message-input';
+import { ForwardDialog } from './forward-dialog';
 import { cn } from '@/lib/utils';
-import type { ConversationView, MessageView } from '@/lib/types';
+import type { ConversationView, ConversationMember, MessageView } from '@/lib/types';
 import { conversationDisplay } from '@/lib/types';
 
 export function ChatWindow({ conversationId }: { conversationId: string }) {
@@ -25,6 +26,9 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [highlightSeqs, setHighlightSeqs] = useState<Set<number>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [forwardMsgs, setForwardMsgs] = useState<MessageView[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastReadSeq = useRef(0);
 
@@ -105,6 +109,32 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
     }
   }
 
+  function startForward(msgs: MessageView[]) {
+    if (msgs.length === 0) return;
+    setForwardMsgs(msgs);
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function forwardSelected() {
+    if (!messages) return;
+    const sel = messages.filter((m) => selectedIds.has(m.id));
+    if (sel.length === 0) return;
+    startForward(sel);
+  }
+
   if (!conv) return null;
   const disp = conversationDisplay(conv, me?.id || '');
   const memberMap = new Map(conv.members.map((m) => [m.userId, m]));
@@ -112,50 +142,66 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
   return (
     <div className="flex h-full flex-col">
       {/* header */}
-      <header className="relative flex h-14 items-center justify-between border-b border-border bg-panel px-4 backdrop-blur-xl">
-        <div className="min-w-0">
-          <div className="truncate font-medium text-text">{disp.name}</div>
-          {conv.type === 'GROUP' && (
-            <div className="text-[11px] text-subtext">{conv.members.length} 位成员</div>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => startCall(conversationId).catch((e) => toast(e.message, 'error'))}
-            className="rounded p-1.5 text-subtext hover:bg-black/5 hover:text-primary"
-            title="视频通话"
-          >
-            <Video size={18} />
+      {selectMode ? (
+        <header className="flex h-14 items-center justify-between border-b border-border bg-panel px-4">
+          <button onClick={exitSelectMode} className="flex items-center gap-1 text-sm text-subtext hover:text-text">
+            <X size={18} /> 取消
           </button>
+          <span className="text-sm font-medium text-text">已选 {selectedIds.size} 条</span>
           <button
-            onClick={() => setSearchOpen((v) => !v)}
-            className="rounded p-1.5 text-subtext hover:bg-black/5"
-            title="搜索"
+            onClick={forwardSelected}
+            disabled={selectedIds.size === 0}
+            className="flex items-center gap-1 text-sm text-primary disabled:opacity-40"
           >
-            <Search size={18} />
+            <Forward size={16} /> 转发
           </button>
-          <div className="relative">
-            <button onClick={() => setMenuOpen((v) => !v)} className="rounded p-1.5 text-subtext hover:bg-black/5">
-              <MoreVertical size={18} />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-border bg-white py-1 text-sm shadow-lg">
-                <MenuItem icon={<Pin size={14} />} label={conv.pinned ? '取消置顶' : '置顶'} onClick={() => togglePin()} />
-                <MenuItem
-                  icon={<BellOff size={14} />}
-                  label={conv.muted ? '取消免打扰' : '消息免打扰'}
-                  onClick={async () => {
-                    const next = !conv.muted;
-                    await api.post(`/conversations/${conversationId}/${next ? 'mute' : 'unmute'}`);
-                    qc.invalidateQueries({ queryKey: ['conversation', conversationId] });
-                    setMenuOpen(false);
-                  }}
-                />
-              </div>
+        </header>
+      ) : (
+        <header className="relative flex h-14 items-center justify-between border-b border-border bg-panel px-4 backdrop-blur-xl">
+          <div className="min-w-0">
+            <div className="truncate font-medium text-text">{disp.name}</div>
+            {conv.type === 'GROUP' && (
+              <div className="text-[11px] text-subtext">{conv.members.length} 位成员</div>
             )}
           </div>
-        </div>
-      </header>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => startCall(conversationId).catch((e) => toast(e.message, 'error'))}
+              className="rounded p-1.5 text-subtext hover:bg-black/5 hover:text-primary"
+              title="视频通话"
+            >
+              <Video size={18} />
+            </button>
+            <button
+              onClick={() => setSearchOpen((v) => !v)}
+              className="rounded p-1.5 text-subtext hover:bg-black/5"
+              title="搜索"
+            >
+              <Search size={18} />
+            </button>
+            <div className="relative">
+              <button onClick={() => setMenuOpen((v) => !v)} className="rounded p-1.5 text-subtext hover:bg-black/5">
+                <MoreVertical size={18} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-border bg-white py-1 text-sm shadow-lg">
+                  <MenuItem icon={<Pin size={14} />} label={conv.pinned ? '取消置顶' : '置顶'} onClick={() => togglePin()} />
+                  <MenuItem
+                    icon={<BellOff size={14} />}
+                    label={conv.muted ? '取消免打扰' : '消息免打扰'}
+                    onClick={async () => {
+                      const next = !conv.muted;
+                      await api.post(`/conversations/${conversationId}/${next ? 'mute' : 'unmute'}`);
+                      qc.invalidateQueries({ queryKey: ['conversation', conversationId] });
+                      setMenuOpen(false);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+      )}
 
       {searchOpen && (
         <div className="flex items-center gap-2 border-b border-border bg-white px-4 py-2">
@@ -186,6 +232,14 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
                   sender={memberMap.get(m.senderId)}
                   onRecall={handleRecall}
                   memberMap={memberMap}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(m.id)}
+                  onToggleSelect={toggleSelect}
+                  onForward={(msg) => startForward([msg])}
+                  onSelectStart={(msg) => {
+                    setSelectedIds(new Set([msg.id]));
+                    setSelectMode(true);
+                  }}
                 />
               </div>
             ))
@@ -197,6 +251,18 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
         onSent={() => qc.invalidateQueries({ queryKey: ['messages', conversationId] })}
         members={conv.members}
         conversationType={conv.type}
+      />
+
+      <ForwardDialog
+        open={!!forwardMsgs}
+        messages={forwardMsgs ?? []}
+        memberMap={memberMap}
+        onClose={() => setForwardMsgs(null)}
+        onDone={() => {
+          setForwardMsgs(null);
+          exitSelectMode();
+          toast('已转发', 'success');
+        }}
       />
     </div>
   );
