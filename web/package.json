@@ -15,7 +15,7 @@
     "@tanstack/react-query": "^5.62.7",
     "zustand": "^5.0.2",
     "socket.io-client": "^4.8.1",
-    "livekit-client": "^2.5.11",
+    "livekit-client": "2.20.0",
     "dayjs": "^1.11.13",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.5",

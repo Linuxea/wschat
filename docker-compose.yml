@@ -81,7 +81,7 @@ services:
       "
 
   livekit:
-    image: docker.io/livekit/livekit-server:v1.8.3
+    image: docker.io/livekit/livekit-server:v1.13.2
     container_name: wschat-livekit
     restart: unless-stopped
     command: ["--config", "/etc/livekit/config.yaml", "--node-ip=127.0.0.1"]

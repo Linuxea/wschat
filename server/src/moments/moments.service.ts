@@ -35,7 +35,13 @@ export class MomentsService {
         content: enc.ciphertext,
         iv: enc.iv,
         authTag: enc.authTag,
-        media: dto.media ?? Prisma.JsonNull,
+        media:
+          dto.media?.map((m) => ({
+            type: m.type,
+            url: m.url,
+            ...(m.width != null && { width: m.width }),
+            ...(m.height != null && { height: m.height }),
+          })) ?? Prisma.JsonNull,
         visibility: dto.visibility,
         specifiedIds: dto.specifiedIds ?? [],
       },

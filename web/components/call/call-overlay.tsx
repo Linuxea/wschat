@@ -58,7 +58,7 @@ function IncomingCard({
   onReject: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur animate-fade-in">
       <div className="mb-6 text-white/80">incoming video call…</div>
       <Avatar src={caller?.avatar} name={caller?.nickname || 'caller'} size={96} />
       <div className="mt-4 text-xl font-medium text-white">{caller?.nickname || '未知'}</div>
@@ -191,7 +191,7 @@ function ActiveCall({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black animate-fade-in">
       <div ref={remoteRef} className="relative flex-1 overflow-hidden">
         {connecting && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/70">

@@ -87,8 +87,8 @@ export function MomentsView() {
 
       {/* composer */}
       {composing && (
-        <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/40 pt-16" onClick={() => setComposing(false)}>
-          <div className="w-[520px] max-w-[92vw] rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/40 pt-16 animate-fade-in" onClick={() => setComposing(false)}>
+          <div className="w-[520px] max-w-[92vw] rounded-2xl bg-white p-5 shadow-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center gap-2">
               <Avatar src={me?.avatar} name={me?.nickname || '我'} size={36} />
               <span className="font-medium">{me?.nickname}</span>

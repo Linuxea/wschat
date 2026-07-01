@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Heart, MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -22,7 +22,15 @@ export function MomentCard({ moment }: { moment: MomentView }) {
   const me = useAuthStore((s) => s.user);
   const [commenting, setCommenting] = useState(false);
   const [comment, setComment] = useState('');
+  const [replyTo, setReplyTo] = useState<{ id: string; nickname: string } | null>(null);
   const isMine = moment.author.id === me?.id;
+
+  const userNames = useMemo(() => {
+    const m = new Map<string, string>();
+    m.set(moment.author.id, moment.author.nickname);
+    for (const c of moment.comments) m.set(c.user.id, c.user.nickname);
+    return m;
+  }, [moment]);
 
   async function like() {
     try {
@@ -36,9 +44,13 @@ export function MomentCard({ moment }: { moment: MomentView }) {
   async function sendComment() {
     if (!comment.trim()) return;
     try {
-      await api.post(`/moments/${moment.id}/comments`, { content: comment.trim() });
+      await api.post(`/moments/${moment.id}/comments`, {
+        content: comment.trim(),
+        replyToUserId: replyTo?.id,
+      });
       setComment('');
       setCommenting(false);
+      setReplyTo(null);
       qc.invalidateQueries({ queryKey: ['moments', 'feed'] });
     } catch (e) {
       toast((e as Error).message, 'error');
@@ -107,25 +119,49 @@ export function MomentCard({ moment }: { moment: MomentView }) {
         {(moment.comments.length > 0 || commenting) && (
           <div className="mt-2 rounded-md bg-wechat-panel p-2">
             {moment.comments.map((c) => (
-              <div key={c.id} className="py-0.5 text-xs">
+              <div
+                key={c.id}
+                className="cursor-pointer rounded px-1 py-0.5 text-xs hover:bg-black/5"
+                onClick={() => {
+                  setReplyTo({ id: c.user.id, nickname: c.user.nickname });
+                  setCommenting(true);
+                }}
+              >
                 <span className="font-medium text-wechat-green">{c.user.nickname}</span>
-                {c.replyToUserId && c.replyToUserId !== c.user.id && <span> 回复 {c.user.nickname}</span>}
+                {c.replyToUserId && c.replyToUserId !== c.user.id && (
+                  <span className="text-wechat-subtext">
+                    {' '}回复 {userNames.get(c.replyToUserId) ?? '该用户'}
+                  </span>
+                )}
                 <span className="text-wechat-text">：{c.content}</span>
               </div>
             ))}
             {commenting && (
-              <div className="mt-2 flex gap-2">
-                <Input
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendComment()}
-                  placeholder="说点什么…"
-                  className="h-8 text-xs"
-                  autoFocus
-                />
-                <button onClick={sendComment} className="rounded bg-wechat-green px-3 text-xs text-white">
-                  发送
-                </button>
+              <div className="mt-2">
+                {replyTo && (
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-wechat-subtext">
+                    <span>回复 {replyTo.nickname}</span>
+                    <button
+                      onClick={() => setReplyTo(null)}
+                      className="text-wechat-subtext hover:text-wechat-text"
+                    >
+                      取消回复
+                    </button>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendComment()}
+                    placeholder={replyTo ? `回复 ${replyTo.nickname}` : '说点什么…'}
+                    className="h-8 text-xs"
+                    autoFocus
+                  />
+                  <button onClick={sendComment} className="rounded bg-wechat-green px-3 text-xs text-white">
+                    发送
+                  </button>
+                </div>
               </div>
             )}
           </div>
