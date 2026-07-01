@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Smile, Image as ImageIcon, FileText, Send, Users } from 'lucide-react';
@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { sendMessage } from '@/lib/socket';
 import { toast } from '@/components/toaster';
 import { Avatar } from '@/components/ui';
+import { ImageStagedBar, type StagedImage } from './image-staged-bar';
 import { cn } from '@/lib/utils';
 import type { ConversationMember } from '@/lib/types';
 
@@ -38,10 +39,18 @@ export function MessageInput({ conversationId, onSent, members, conversationType
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIdx, setActiveIdx] = useState(0);
+  const [staged, setStaged] = useState<StagedImage[]>([]);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [imgSending, setImgSending] = useState(false);
   const fileImg = useRef<HTMLInputElement>(null);
   const fileDoc = useRef<HTMLInputElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const atIndexRef = useRef<number>(-1); //'@' 字符在文本中的位置
+
+  // 卸载时释放未发送的预览 objectURL，避免内存泄漏
+  const stagedRef = useRef<StagedImage[]>([]);
+  stagedRef.current = staged;
+  useEffect(() => () => stagedRef.current.forEach((s) => URL.revokeObjectURL(s.preview)), []);
 
   const isGroup = conversationType === 'GROUP';
 
@@ -176,21 +185,71 @@ export function MessageInput({ conversationId, onSent, members, conversationType
     }
   }
 
-  async function onImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
+  function onImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
     e.target.value = '';
-    if (!f) return;
+    if (files.length === 0) return;
+    const added: StagedImage[] = files.map((f) => ({
+      id: `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${f.name}`,
+      file: f,
+      preview: URL.createObjectURL(f),
+    }));
+    setStaged((prev) => [...prev, ...added]);
+  }
+
+  function removeStaged(id: string) {
+    setStaged((prev) => {
+      const t = prev.find((s) => s.id === id);
+      if (t) URL.revokeObjectURL(t.preview);
+      return prev.filter((s) => s.id !== id);
+    });
+  }
+
+  function clearStaged() {
+    setStaged((prev) => {
+      prev.forEach((s) => URL.revokeObjectURL(s.preview));
+      return [];
+    });
+    setMergeMode(false);
+  }
+
+  async function sendStaged() {
+    if (staged.length === 0 || imgSending) return;
+    setImgSending(true);
     try {
-      const up = await api.upload(f);
-      await sendMessage({
-        conversationId,
-        type: 'IMAGE',
-        content: JSON.stringify({ url: up.url, size: up.size }),
-        clientMsgId: `i-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      });
+      // 并发上传（保序）
+      const uploaded = await Promise.all(staged.map((s) => api.upload(s.file)));
+      const useMerge = mergeMode && staged.length >= 3;
+      if (useMerge) {
+        // 合并：1 条 FORWARDED 图集卡片
+        const items = uploaded.map((up) => ({
+          type: 'IMAGE',
+          content: JSON.stringify({ url: up.url, size: up.size }),
+        }));
+        await sendMessage({
+          conversationId,
+          type: 'FORWARDED',
+          content: JSON.stringify({ title: '图片', items }),
+          clientMsgId: `ig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        });
+      } else {
+        // 逐条：按顺序发 IMAGE（保 seq 顺序）
+        for (let i = 0; i < uploaded.length; i++) {
+          const up = uploaded[i];
+          await sendMessage({
+            conversationId,
+            type: 'IMAGE',
+            content: JSON.stringify({ url: up.url, size: up.size }),
+            clientMsgId: `i-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+          });
+        }
+      }
+      clearStaged();
       onSent();
     } catch (err) {
       toast((err as Error).message || '上传失败', 'error');
+    } finally {
+      setImgSending(false);
     }
   }
 
@@ -262,6 +321,15 @@ export function MessageInput({ conversationId, onSent, members, conversationType
           ))}
         </div>
       )}
+      <ImageStagedBar
+        staged={staged}
+        mergeMode={mergeMode}
+        sending={imgSending}
+        onToggleMerge={() => setMergeMode((v) => !v)}
+        onRemove={removeStaged}
+        onSend={sendStaged}
+        onCancel={clearStaged}
+      />
       <div className="flex items-end gap-2 px-3 py-2">
         <button
           onClick={() => setShowEmoji((v) => !v)}
@@ -276,7 +344,7 @@ export function MessageInput({ conversationId, onSent, members, conversationType
         <button onClick={() => fileDoc.current?.click()} className="rounded p-1.5 text-subtext hover:bg-black/5" title="文件/视频">
           <FileText size={20} />
         </button>
-        <input ref={fileImg} type="file" accept="image/*" hidden onChange={onImage} />
+        <input ref={fileImg} type="file" accept="image/*" multiple hidden onChange={onImage} />
         <input ref={fileDoc} type="file" hidden onChange={onFile} />
         <textarea
           ref={taRef}

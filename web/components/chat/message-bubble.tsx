@@ -266,10 +266,15 @@ function previewForwardedItem(it: ForwardedItem): string {
   }
 }
 
+function isImageAlbum(items: ForwardedItem[]): boolean {
+  return items.length > 0 && items.every((it) => it.type === 'IMAGE' || it.type === 'VIDEO');
+}
+
 function ForwardedCard({ bundle }: { bundle: { title?: string; items?: ForwardedItem[] } }) {
   const [expanded, setExpanded] = useState(false);
   const items = Array.isArray(bundle?.items) ? bundle.items : [];
   if (items.length === 0) return <span className="text-xs text-subtext">[空的聊天记录]</span>;
+  if (isImageAlbum(items)) return <ImageAlbum items={items} title={bundle?.title} />;
   const shown = expanded ? items : items.slice(0, 3);
   return (
     <div className="min-w-[200px] max-w-[240px]">
@@ -290,6 +295,63 @@ function ForwardedCard({ bundle }: { bundle: { title?: string; items?: Forwarded
           {expanded ? '收起' : `展开全部 ${items.length} 条`}
         </button>
       )}
+    </div>
+  );
+}
+
+/** 图集卡片：折叠态九宫格缩略（>9 显示 +N），展开态纵向大图列表。 */
+function ImageAlbum({ items, title }: { items: ForwardedItem[]; title?: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const label = title || `${items.length} 张图片`;
+  if (expanded) {
+    return (
+      <div className="min-w-[180px] max-w-[240px]">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-xs font-medium text-subtext">{label}</span>
+          <button onClick={() => setExpanded(false)} className="text-[11px] text-primary hover:underline">
+            收起
+          </button>
+        </div>
+        <div className="space-y-1">
+          {items.map((it, i) => {
+            const p = safeJson(it.content || '');
+            return p?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={p.url} alt="" className="max-h-60 w-full rounded object-cover" />
+            ) : null;
+          })}
+        </div>
+      </div>
+    );
+  }
+  const cells = items.slice(0, 9);
+  const overflow = items.length - 9;
+  return (
+    <div className="min-w-[180px] max-w-[200px]">
+      <div className="mb-1 text-xs font-medium text-subtext">{label}</div>
+      <div className="grid grid-cols-3 gap-0.5">
+        {cells.map((it, i) => {
+          const p = safeJson(it.content || '');
+          const isLast = i === 8 && overflow > 0;
+          return (
+            <button
+              key={i}
+              onClick={() => setExpanded(true)}
+              className="relative aspect-square overflow-hidden rounded-sm"
+            >
+              {p?.url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.url} alt="" className="h-full w-full object-cover" />
+              )}
+              {isLast && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-medium text-white">
+                  +{overflow}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
