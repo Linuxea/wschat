@@ -3,11 +3,12 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MomentVisibility, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
-import { RealtimeService } from '../common/realtime/realtime.service';
 import { PUBLIC_USER_SELECT } from '../users/users.service';
+import { NotificationEvent } from '../notifications/notifications.service';
 import { CreateMomentDto, CommentDto } from './dto';
 
 const MOMENT_INCLUDE = {
@@ -24,7 +25,7 @@ export class MomentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
-    private readonly realtime: RealtimeService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async create(userId: string, dto: CreateMomentDto) {
@@ -123,11 +124,25 @@ export class MomentsService {
     });
     if (existing) {
       await this.prisma.momentLike.delete({ where: { momentId_userId: { momentId: id, userId } } });
-      this.realtime.emitToUser(moment.authorId, 'moment:like', { momentId: id, userId, liked: false });
+      this.emitNotification({
+        recipientId: moment.authorId,
+        actorId: userId,
+        type: 'MOMENT_LIKE',
+        entityType: 'moment',
+        entityId: id,
+        payload: { liked: false },
+      }, 'moment.unliked');
       return { liked: false };
     }
     await this.prisma.momentLike.create({ data: { momentId: id, userId } });
-    this.realtime.emitToUser(moment.authorId, 'moment:like', { momentId: id, userId, liked: true });
+    this.emitNotification({
+      recipientId: moment.authorId,
+      actorId: userId,
+      type: 'MOMENT_LIKE',
+      entityType: 'moment',
+      entityId: id,
+      payload: { liked: true },
+    }, 'moment.liked');
     return { liked: true };
   }
 
@@ -138,8 +153,33 @@ export class MomentsService {
       data: { momentId: id, userId, content: dto.content, replyToUserId: dto.replyToUserId ?? null },
       include: { user: { select: PUBLIC_USER_SELECT } },
     });
-    this.realtime.emitToUser(moment.authorId, 'moment:comment', { momentId: id, comment });
+    // 通知朋友圈作者（除非自己评论自己）
+    if (moment.authorId !== userId) {
+      this.emitNotification({
+        recipientId: moment.authorId,
+        actorId: userId,
+        type: 'MOMENT_COMMENT',
+        entityType: 'moment',
+        entityId: id,
+        payload: { commentId: comment.id, content: dto.content },
+      }, 'moment.commented');
+    }
+    // 通知被回复者（若回复的是别人的评论，且不是自己）
+    if (dto.replyToUserId && dto.replyToUserId !== userId && dto.replyToUserId !== moment.authorId) {
+      this.emitNotification({
+        recipientId: dto.replyToUserId,
+        actorId: userId,
+        type: 'MOMENT_REPLY',
+        entityType: 'moment',
+        entityId: id,
+        payload: { commentId: comment.id, content: dto.content },
+      }, 'moment.replied');
+    }
     return comment;
+  }
+
+  private emitNotification(e: NotificationEvent, event: string) {
+    this.events.emit(event, e);
   }
 
   async deleteComment(commentId: string, userId: string) {

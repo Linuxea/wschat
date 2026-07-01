@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, ImagePlus, Globe, Users, Lock, UserCheck, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Camera, ImagePlus, Globe, Users, Lock, UserCheck, Send, Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
+import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/components/toaster';
 import { Avatar, Button, EmptyState, Spinner, Textarea } from '@/components/ui';
 import { MomentCard } from './moment-card';
@@ -18,7 +20,9 @@ const VIS_OPTIONS = [
 
 export function MomentsView() {
   const qc = useQueryClient();
+  const router = useRouter();
   const me = useAuthStore((s) => s.user);
+  const momentsUnread = useNotificationStore((s) => s.badges.moments);
   const [composing, setComposing] = useState(false);
   const [text, setText] = useState('');
   const [visibility, setVisibility] = useState('FRIENDS');
@@ -64,13 +68,25 @@ export function MomentsView() {
     <div className="flex h-full w-full flex-col bg-white">
       <header className="flex h-14 items-center justify-between border-b border-border px-5">
         <h1 className="text-lg font-semibold">朋友圈</h1>
-        <button
-          onClick={() => setComposing(true)}
-          className="rounded p-2 text-subtext hover:bg-black/5 hover:text-primary"
-          title="发表"
-        >
-          <Camera size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => router.push('/notifications')}
+            className="relative rounded p-2 text-subtext hover:bg-black/5 hover:text-primary"
+            title="消息"
+          >
+            <Bell size={20} />
+            {momentsUnread > 0 && (
+              <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+            )}
+          </button>
+          <button
+            onClick={() => setComposing(true)}
+            className="rounded p-2 text-subtext hover:bg-black/5 hover:text-primary"
+            title="发表"
+          >
+            <Camera size={20} />
+          </button>
+        </div>
       </header>
 
       <div className="scrollbar-thin flex-1 overflow-y-auto">

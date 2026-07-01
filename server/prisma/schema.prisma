@@ -38,6 +38,8 @@ model User {
   momentLikes            MomentLike[]
   momentComments         MomentComment[]
   callRecords            CallRecord[]       @relation("CallCaller")
+  notificationsReceived  Notification[]     @relation("NotificationRecipient")
+  notificationsTriggered Notification[]     @relation("NotificationActor")
 
   @@index([username])
 }
@@ -183,6 +185,8 @@ model Message {
   seq            Int // monotonic within conversation
   clientMsgId    String // idempotency key
   replyToId      String?
+  mentions       String[] //被 @ 的成员 userId 列表
+  contentTsv     Unsupported("tsvector")? @map("content_tsv") // full-text index column, written via raw SQL
   deletedAt      DateTime? // soft-delete = recall
   createdAt      DateTime    @default(now())
 
@@ -195,6 +199,7 @@ model Message {
   @@unique([conversationId, clientMsgId])
   @@index([conversationId, seq])
   @@index([senderId])
+  @@index([contentTsv], type: Gin)
 }
 
 // ============================================================
@@ -278,4 +283,36 @@ model MomentComment {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([momentId])
+}
+
+// ============================================================
+// Notifications (红点 / 互动消息)
+// ============================================================
+
+enum NotificationType {
+  MOMENT_LIKE      // 赞了我的朋友圈
+  MOMENT_COMMENT   // 评论了我的朋友圈
+  MOMENT_REPLY     // 回复了我的评论
+  FRIEND_REQUEST   // 收到好友请求
+  MENTION          // 群里 @我
+  MISSED_CALL      // 未接通话
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String //接收者
+  actorId     String //触发者
+  type        NotificationType
+  entityType  String // 'moment' | 'friend_request' | 'message' | 'call'
+  entityId    String //对应实体 id
+  payload     Json? //快照：momentId/commentId/preview 等
+  readAt      DateTime? // null = 未读
+  createdAt   DateTime         @default(now())
+
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt])
+  @@index([recipientId, type, readAt])
+  @@index([recipientId, createdAt])
 }

@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { getSocket, recallMessage } from '@/lib/socket';
 import { useAuthStore } from '@/lib/auth-store';
 import { useCallStore } from '@/lib/call-store';
+import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/components/toaster';
 import { Avatar, EmptyState } from '@/components/ui';
 import { MessageBubble } from './message-bubble';
@@ -19,6 +20,7 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
   const qc = useQueryClient();
   const me = useAuthStore((s) => s.user);
   const startCall = useCallStore((s) => s.startOutgoing);
+  const fetchBadges = useNotificationStore((s) => s.fetchBadges);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
@@ -64,8 +66,9 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
     api.post(`/conversations/${conversationId}/read`, { seq: latestSeq }).then(() => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       qc.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      fetchBadges(); //已读会话后同步聊天红点
     });
-  }, [messages, conversationId, qc]);
+  }, [messages, conversationId, qc, fetchBadges]);
 
   // autoscroll
   useEffect(() => {
@@ -182,13 +185,19 @@ export function ChatWindow({ conversationId }: { conversationId: string }) {
                   isMine={m.senderId === me?.id}
                   sender={memberMap.get(m.senderId)}
                   onRecall={handleRecall}
+                  memberMap={memberMap}
                 />
               </div>
             ))
         )}
       </div>
 
-      <MessageInput conversationId={conversationId} onSent={() => qc.invalidateQueries({ queryKey: ['messages', conversationId] })} />
+      <MessageInput
+        conversationId={conversationId}
+        onSent={() => qc.invalidateQueries({ queryKey: ['messages', conversationId] })}
+        members={conv.members}
+        conversationType={conv.type}
+      />
     </div>
   );
 }

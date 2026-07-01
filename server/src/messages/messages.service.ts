@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { MessageType } from '@prisma/client';
 import { nanoid } from 'nanoid';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { RealtimeService } from '../common/realtime/realtime.service';
 import { SendMessageDto } from './dto';
 
 const RECALL_WINDOW_MS = 2 * 60 * 1000;
+
+/** '@所有人' 的哨兵值，客户端选择「所有人」时在 mentions 中传入；服务端展开为全体成员，存储列保留原始哨兵。 */
+export const ALL_SENTINEL = '__all__';
 
 export interface MessageView {
   id: string;
@@ -22,6 +26,7 @@ export interface MessageView {
   seq: number;
   clientMsgId: string;
   replyToId: string | null;
+  mentions: string[]; //被 @ 的 userId 列表，可能含 '__all__' 哨兵
   createdAt: Date;
   deletedAt: Date | null;
 }
@@ -41,6 +46,7 @@ export class MessagesService {
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
     private readonly realtime: RealtimeService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async send(senderId: string, dto: SendMessageDto): Promise<{
@@ -104,13 +110,14 @@ export class MessagesService {
       : '';
 
     // 6. raw INSERT (writes content_tsv at insert time using the plaintext tokenization)
+    const mentions = dto.mentions ?? [];
     await this.prisma.$executeRaw`
       INSERT INTO "Message"
-        (id, "conversationId", "senderId", type, content, iv, "authTag", seq, "clientMsgId", "replyToId", content_tsv, "createdAt")
+        (id, "conversationId", "senderId", type, content, iv, "authTag", seq, "clientMsgId", "replyToId", mentions, content_tsv, "createdAt")
       VALUES
         (${id}, ${dto.conversationId}, ${senderId}, CAST(${dto.type} AS "MessageType"),
          ${enc.ciphertext}, ${enc.iv}, ${enc.authTag}, ${seq}, ${dto.clientMsgId},
-         ${dto.replyToId ?? null}, to_tsvector('simple', ${tsv}), NOW())`;
+         ${dto.replyToId ?? null}, ${mentions}::text[], to_tsvector('simple', ${tsv}), NOW())`;
 
     // 7. fetch normalized row
     const created = await this.prisma.message.findUniqueOrThrow({ where: { id } });
@@ -121,6 +128,25 @@ export class MessagesService {
       for (const m of conv.members) {
         // emit to every member's devices (incl. sender's other devices — front-end de-dups by clientMsgId)
         this.realtime.emitToUser(m.userId, 'message:new', view);
+      }
+
+      // 9. 通知被 @ 的成员（仅对该会话成员中的 @ 生效）
+      const memberIds = new Set(conv.members.map((m) => m.userId));
+      // '@所有人' 哨兵 '__all__' 展开为全体成员（去掉发送者）；存储列保留原始哨兵
+      let resolved = mentions.filter((uid) => uid !== ALL_SENTINEL);
+      if (mentions.includes(ALL_SENTINEL)) {
+        resolved.push(...conv.members.filter((m) => m.userId !== senderId).map((m) => m.userId));
+      }
+      const targets = Array.from(new Set(resolved)).filter((uid) => memberIds.has(uid) && uid !== senderId);
+      for (const targetId of targets) {
+        this.events.emit('message.mentioned', {
+          recipientId: targetId,
+          actorId: senderId,
+          type: 'MENTION',
+          entityType: 'message',
+          entityId: id,
+          payload: { conversationId: dto.conversationId, seq, contentPreview: dto.type === MessageType.TEXT ? dto.content.slice(0, 60) : null },
+        });
       }
     }
 
@@ -164,12 +190,13 @@ export class MessagesService {
         seq: number;
         clientMsgId: string;
         replyToId: string | null;
+        mentions: string[];
         createdAt: Date;
         deletedAt: Date | null;
       }>
     >`
       SELECT id, "conversationId", "senderId", type, content, iv, "authTag",
-             seq, "clientMsgId", "replyToId", "createdAt", "deletedAt"
+             seq, "clientMsgId", "replyToId", mentions, "createdAt", "deletedAt"
       FROM "Message"
       WHERE "conversationId" = ${conversationId}
         AND content_tsv @@ plainto_tsquery('simple', ${tokenized})
@@ -221,6 +248,7 @@ export class MessagesService {
     seq: number;
     clientMsgId: string;
     replyToId: string | null;
+    mentions?: string[];
     createdAt: Date;
     deletedAt: Date | null;
   }): MessageView {
@@ -241,6 +269,7 @@ export class MessagesService {
       seq: m.seq,
       clientMsgId: m.clientMsgId,
       replyToId: m.replyToId,
+      mentions: m.mentions ?? [],
       createdAt: m.createdAt,
       deletedAt: m.deletedAt,
     };

@@ -46,6 +46,7 @@ export interface MessageView {
   seq: number;
   clientMsgId: string;
   replyToId: string | null;
+  mentions: string[]; //被 @ 的 userId 列表，可能含 '__all__' 哨兵
   createdAt: string;
   deletedAt: string | null;
 }
@@ -74,6 +75,34 @@ export interface CallInvitePayload {
   conversationId: string;
   roomName: string;
   caller: PublicUser;
+}
+
+export type NotificationType =
+  | 'MOMENT_LIKE'
+  | 'MOMENT_COMMENT'
+  | 'MOMENT_REPLY'
+  | 'FRIEND_REQUEST'
+  | 'MENTION'
+  | 'MISSED_CALL';
+
+export interface Badges {
+  chat: number;
+  contacts: number;
+  moments: number;
+}
+
+export interface NotificationView {
+  id: string;
+  type: NotificationType;
+  actor: PublicUser;
+  actors: PublicUser[];
+  actorCount: number;
+  entityType: string;
+  entityId: string;
+  payload: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+  aggregated: boolean;
 }
 
 /** Pick display name/avatar for a conversation relative to current user. */

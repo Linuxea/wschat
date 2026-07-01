@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsInt, Min, Max, MaxLength } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsInt, IsArray, Min, Max, MaxLength } from 'class-validator';
 import { MessageType } from '@prisma/client';
 
 export class SendMessageDto {
@@ -19,6 +19,11 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   replyToId?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mentions?: string[]; //被 @ 的成员 userId 列表
 }
 
 export class SearchMessagesDto {

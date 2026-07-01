@@ -12,9 +12,10 @@ interface Props {
   onRecall?: (msg: MessageView) => void;
   onReply?: (msg: MessageView) => void;
   replyTarget?: MessageView | null;
+  memberMap?: Map<string, ConversationMember>;
 }
 
-export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTarget }: Props) {
+export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTarget, memberMap }: Props) {
   const recalled = !!msg.deletedAt;
   const withinRecall =
     isMine && !recalled && Date.now() - new Date(msg.createdAt).getTime() < 2 * 60 * 1000;
@@ -40,7 +41,7 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
               撤回
             </button>
           )}
-          <MessageBody msg={msg} isMine={isMine} onReply={onReply} />
+          <MessageBody msg={msg} isMine={isMine} onReply={onReply} memberMap={memberMap} />
         </div>
         <span className="mt-0.5 text-[10px] text-subtext opacity-0 transition group-hover:opacity-100">
           {formatTime(msg.createdAt)}
@@ -50,14 +51,14 @@ export function MessageBubble({ msg, isMine, sender, onRecall, onReply, replyTar
   );
 }
 
-function MessageBody({ msg, isMine, onReply }: { msg: MessageView; isMine: boolean; onReply?: (m: MessageView) => void }) {
+function MessageBody({ msg, isMine, onReply, memberMap }: { msg: MessageView; isMine: boolean; onReply?: (m: MessageView) => void; memberMap?: Map<string, ConversationMember> }) {
   if (msg.deletedAt) {
     return <span className="text-xs text-subtext">该消息已撤回</span>;
   }
   let node: React.ReactNode;
   switch (msg.type) {
     case 'TEXT':
-      node = <span className="whitespace-pre-wrap break-words">{msg.content}</span>;
+      node = <TextWithMentions content={msg.content} mentions={msg.mentions} memberMap={memberMap} isMine={isMine} />;
       break;
     case 'EMOJI':
       node = <span className="text-3xl leading-none">{msg.content}</span>;
@@ -128,6 +129,56 @@ function VoiceBar({ url, duration, isMine }: { url: string; duration?: number; i
       <span className="text-base">{playing ? '⏸' : '▶'}</span>
       <span className="text-xs">{duration || 0}&quot;</span>
     </button>
+  );
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 渲染文本，把真实 @提及 的 `@昵称` 高亮（精确：只标 mentions 命中的）。 */
+function TextWithMentions({
+  content,
+  mentions,
+  memberMap,
+  isMine,
+}: {
+  content: string;
+  mentions?: string[];
+  memberMap?: Map<string, ConversationMember>;
+  isMine: boolean;
+}) {
+  const tokens = new Set<string>();
+  if (mentions && mentions.length) {
+    for (const m of mentions) {
+      if (m === '__all__') {
+        tokens.add('@所有人');
+      } else {
+        const mem = memberMap?.get(m);
+        const label = mem ? mem.remark || mem.nickname || mem.username : '';
+        if (label) tokens.add(`@${label}`);
+      }
+    }
+  }
+  if (tokens.size === 0) {
+    return <span className="whitespace-pre-wrap break-words">{content}</span>;
+  }
+  //长 token 优先匹配，避免 `@张` 抢了 `@张三`
+  const sorted = Array.from(tokens).sort((a, b) => b.length - a.length);
+  const re = new RegExp(`(${sorted.map(escapeRegExp).join('|')})`, 'g');
+  const parts = content.split(re);
+  return (
+    <span className="whitespace-pre-wrap break-words">
+      {parts.map((p, i) =>
+        tokens.has(p) ? (
+          <span key={i} className={cn('font-medium', isMine ? 'text-white/90 underline' : 'text-primary underline')}>
+            {p}
+          </span>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </span>
   );
 }
 

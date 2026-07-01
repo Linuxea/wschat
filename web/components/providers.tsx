@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useThemeStore } from '@/lib/theme-store';
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket';
+import { useNotificationStore } from '@/lib/notification-store';
 import { Toaster } from '@/components/toaster';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const logout = useAuthStore((s) => s.logout);
   const initTheme = useThemeStore((s) => s.init);
   const connected = useRef(false);
+  const fetchBadges = useNotificationStore((s) => s.fetchBadges);
+  const onSocketBadge = useNotificationStore((s) => s.onSocketBadge);
 
   useEffect(() => {
     init();
@@ -32,15 +35,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (accessToken && !connected.current) {
       connected.current = true;
       connectSocket();
+      fetchBadges(); //登录后立即拉取红点
       const s = getSocket();
       s.on('connect', () => console.debug('[ws] connected'));
       s.on('disconnect', () => console.debug('[ws] disconnected'));
+      // 通知红点：服务端推送的新通知 + badge 更新
+      s.on('notification:new', () => fetchBadges());
+      s.on('notification:badge', onSocketBadge);
+      // 聊天红点：新消息会改变会话未读数，刷新 badge
+      s.on('message:new', () => fetchBadges());
     }
     if (!accessToken && connected.current) {
       connected.current = false;
       disconnectSocket();
     }
-  }, [accessToken]);
+  }, [accessToken, fetchBadges, onSocketBadge]);
 
   useEffect(() => {
     const onExpired = () => {

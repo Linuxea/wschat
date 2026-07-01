@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { AccessToken } from 'livekit-server-sdk';
 import { nanoid } from 'nanoid';
 import { CallStatus } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RealtimeService } from '../common/realtime/realtime.service';
 import { PUBLIC_USER_SELECT } from '../users/users.service';
@@ -17,6 +18,7 @@ export class CallService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeService,
+    private readonly events: EventEmitter2,
     private readonly config: ConfigService,
   ) {}
 
@@ -110,16 +112,39 @@ export class CallService {
     const record = await this.prisma.callRecord.findUnique({ where: { id: callId } });
     if (!record) throw new NotFoundException('call not found');
     await this.assertMember(record.conversationId, userId);
+
+    // 仍在响铃状态即结束 = 被叫未接听 → 判为未接来电
+    const missed = record.status === CallStatus.RINGING;
     await this.prisma.callRecord.update({
       where: { id: callId },
-      data: { status: CallStatus.ENDED, endedAt: new Date() },
+      data: { status: missed ? CallStatus.MISSED : CallStatus.ENDED, endedAt: new Date() },
     });
+
     const members = await this.prisma.conversationMember.findMany({
       where: { conversationId: record.conversationId },
       select: { userId: true },
     });
     for (const m of members) {
       this.realtime.emitToUser(m.userId, 'call:end', { callId });
+    }
+
+    // 给未接听方（非主叫）发未接来电通知
+    if (missed) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: record.callerId },
+        select: PUBLIC_USER_SELECT,
+      });
+      for (const m of members) {
+        if (m.userId === record.callerId) continue;
+        this.events.emit('call.missed', {
+          recipientId: m.userId,
+          actorId: record.callerId,
+          type: 'MISSED_CALL',
+          entityType: 'call',
+          entityId: callId,
+          payload: { conversationId: record.conversationId, caller },
+        });
+      }
     }
     return { ok: true };
   }

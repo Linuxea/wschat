@@ -39,6 +39,7 @@ export function sendMessage(payload: {
   content: string;
   clientMsgId: string;
   replyToId?: string | null;
+  mentions?: string[];
 }): Promise<{
   id: string;
   clientMsgId: string;

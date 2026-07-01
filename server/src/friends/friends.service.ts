@@ -4,14 +4,20 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, FriendRequestStatus } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PUBLIC_USER_SELECT } from '../users/users.service';
 import { SendRequestDto, UpdateRemarkDto, CreateTagDto, SetFriendTagsDto } from './dto';
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // ---------------- Friend requests ----------------
 
@@ -44,10 +50,21 @@ export class FriendsService {
       throw new BadRequestException('cannot send request to this user');
     }
 
-    return this.prisma.friendRequest.create({
+    const created = await this.prisma.friendRequest.create({
       data: { fromId, toId: dto.toId, message: dto.message },
       include: { from: { select: PUBLIC_USER_SELECT }, to: { select: PUBLIC_USER_SELECT } },
     });
+
+    this.events.emit('friend.requested', {
+      recipientId: dto.toId,
+      actorId: fromId,
+      type: 'FRIEND_REQUEST',
+      entityType: 'friend_request',
+      entityId: created.id,
+      payload: { message: dto.message ?? null },
+    });
+
+    return created;
   }
 
   listIncoming(userId: string) {
@@ -93,6 +110,9 @@ export class FriendsService {
       await this.ensurePrivateConversation(tx, req.fromId, req.toId);
     });
 
+    // 接受后清掉自己收到的该好友请求红点
+    await this.notifications.markAllRead(userId, 'contacts');
+
     return { ok: true };
   }
 
@@ -107,6 +127,7 @@ export class FriendsService {
       where: { id: requestId },
       data: { status: FriendRequestStatus.REJECTED },
     });
+    await this.notifications.markAllRead(userId, 'contacts');
     return { ok: true };
   }
 

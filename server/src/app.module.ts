@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { CryptoModule } from './common/crypto/crypto.module';
@@ -14,6 +15,7 @@ import { EventsModule } from './events/events.module';
 import { GroupsModule } from './groups/groups.module';
 import { CallModule } from './call/call.module';
 import { MomentsModule } from './moments/moments.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -22,6 +24,7 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       envFilePath: ['.env', '../.env'],
     }),
+    EventEmitterModule.forRoot({ delimiter: '.', wildcard: true }),
     PrismaModule,
     RedisModule,
     CryptoModule,
@@ -35,6 +38,7 @@ import { HealthController } from './health.controller';
     GroupsModule,
     CallModule,
     MomentsModule,
+    NotificationsModule,
     EventsModule,
   ],
   controllers: [HealthController],
