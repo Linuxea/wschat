@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, LogOut, Save } from 'lucide-react';
+import { Camera, LogOut, Save, Volume2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { disconnectSocket } from '@/lib/socket';
+import { useSoundStore } from '@/lib/sound-store';
+import { playMessageAlert } from '@/lib/sound';
 import { toast } from '@/components/toaster';
 import { Avatar, Button, Input, Textarea } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import type { PublicUser } from '@/lib/types';
 
 export default function ProfilePage() {
@@ -15,6 +18,10 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+  const soundEnabled = useSoundStore((s) => s.enabled);
+  const soundVolume = useSoundStore((s) => s.volume);
+  const setSoundEnabled = useSoundStore((s) => s.setEnabled);
+  const setSoundVolume = useSoundStore((s) => s.setVolume);
   const avatarInput = useRef<HTMLInputElement>(null);
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
@@ -91,6 +98,58 @@ export default function ProfilePage() {
             <Button onClick={save} disabled={saving} className="w-full">
               <Save size={16} /> {saving ? '保存中…' : '保存修改'}
             </Button>
+          </div>
+
+          <div className="mt-8 border-t border-border pt-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Volume2 size={16} className="text-subtext" />
+              <h2 className="text-sm font-semibold text-text">消息提示音</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-subtext">接收新消息时播放</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={soundEnabled}
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+                    soundEnabled ? 'bg-primary' : 'bg-black/15',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                      soundEnabled ? 'translate-x-5' : 'translate-x-0.5',
+                    )}
+                  />
+                </button>
+              </div>
+              {soundEnabled && (
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs text-subtext">音量</span>
+                    <button
+                      type="button"
+                      onClick={() => playMessageAlert('normal', soundVolume)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      试听
+                    </button>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    value={soundVolume}
+                    onChange={(e) => setSoundVolume(parseFloat(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-8 border-t border-border pt-4">
